@@ -84,6 +84,23 @@ class Engine {
       scenes,
       onUpdate: this.onRouterUpdate.bind(this),
     });
+
+    // Track first user interaction
+    {
+      const onFirstInteraction = () => {
+        window.removeEventListener('mousedown', onFirstInteraction);
+        window.removeEventListener('keydown', onFirstInteraction);
+        window.removeEventListener('vrdisplayactivate', onFirstInteraction);
+        this.hasInteracted = true;
+        if (this.waitForFirstInteractionQueue) {
+          this.waitForFirstInteractionQueue.forEach(resolve => resolve());
+          delete this.waitForFirstInteractionQueue;
+        }
+      };
+      window.addEventListener('mousedown', onFirstInteraction, false);
+      window.addEventListener('keydown', onFirstInteraction, false);
+      window.addEventListener('vrdisplayactivate', onFirstInteraction, false);
+    }
   }
 
   onAnimationTick() {
@@ -223,7 +240,9 @@ class Engine {
       sound.setVolume(volume);
       audioLoader.load(file, (buffer) => {
         sound.setBuffer(buffer);
-        sound.play();
+        this
+          .waitForFirstInteraction()
+          .then(() => sound.play());
       });
       return sound;
     });
@@ -234,6 +253,20 @@ class Engine {
     fog.color.setHex(color);
     sky.material.color.copy(fog.color);
     renderer.setClearColor(fog.color);
+  }
+
+  waitForFirstInteraction() {
+    const { hasInteracted } = this;
+    return new Promise((resolve) => {
+      if (hasInteracted) {
+        resolve();
+        return;
+      }
+      if (!this.waitForFirstInteractionQueue) {
+        this.waitForFirstInteractionQueue = [];
+      }
+      this.waitForFirstInteractionQueue.push(resolve);
+    });
   }
 }
 
