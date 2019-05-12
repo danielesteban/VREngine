@@ -20,7 +20,11 @@ class Router {
     });
     this.onUpdate = onUpdate;
     this.history.listen(this.onLocationUpdate.bind(this));
-    this.onLocationUpdate(this.history.location);
+    if (window.location.hash) {
+      this.history.replace(`/${window.location.hash.substr(2)}`);
+    } else {
+      this.onLocationUpdate(this.history.location);
+    }
   }
 
   onLocationUpdate({ pathname }) {
