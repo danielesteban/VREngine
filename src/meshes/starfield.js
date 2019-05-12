@@ -39,6 +39,7 @@ class Starfield extends Points {
     if (!Starfield.material) {
       Starfield.material = new PointsMaterial({
         fog: false,
+        sizeAttenuation: false,
         vertexColors: VertexColors,
       });
     }
